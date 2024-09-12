@@ -1,0 +1,274 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Code Editor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        input[type="color"],
+        input[type="text"],
+        button {
+            padding: 10px;
+            margin-top: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .code-editor-tool {
+            border: 1px solid #4CAF50;
+            background-color: #f9fff9;
+        }
+
+        #colorDisplay,
+        #ipInfo,
+        #output {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+
+        #copyButton {
+            display: none;
+            padding: 8px;
+            margin-top: 10px;
+        }
+
+        #editor {
+            height: 300px;
+            width: 100%;
+            border: 1px solid #ccc;
+        }
+
+        #output {
+            width: 100%;
+            height: 300px;
+            margin-top: 20px;
+        }
+
+/* Floating Menu Styles */
+    #assistantMenu {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 60px; /* Increased width for better click area */
+        height: 60px; /* Increased height for better click area */
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4CAF50, #2E7D32); /* Gradient background */
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 28px; /* Increased font size for readability */
+        cursor: pointer;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        transition: background-color 0.3s ease, transform 0.3s ease; /* Added transform for hover effect */
+    }
+
+    #assistantMenu:hover {
+        background: linear-gradient(135deg, #45a049, #388E3C); /* Darker gradient on hover */
+        transform: translateY(-4px); /* Slight lift effect on hover */
+    }
+
+    #menu {
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        width: 250px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); /* Darker shadow for more depth */
+        display: none;
+        z-index: 1000;
+        animation: fadeIn 0.2s; /* Animation for fading in the menu */
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    #menu h3 {
+        padding: 10px;
+        background-color: #4CAF50;
+        color: white;
+        text-align: center;
+        margin: 0;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        font-size: 18px; /* Slightly larger font size */
+    }
+
+    #menu ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    #menu ul li {
+        padding: 10px 20px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    #menu ul li:hover {
+        background-color: #f0f0f0; /* Light hover effect */
+        color: #4CAF50; /* Change color on hover */
+        font-weight: bold; /* Bold text on hover */
+    }
+
+    </style>
+</head>
+
+<body>
+
+    <h1></h1>
+    <br><br><br><br><br>
+
+    <!-- Floating Assistant Menu Button -->
+    <div id="assistantMenu" onclick="toggleMenu()">+</div>
+
+    <!-- Menu Display -->
+    <div id="menu">
+        <h3>Assistant Menu</h3>
+        <ul>
+            <li onclick="resetEditor()">Reset Editor</li>
+            <li onclick="downloadCode()">Download Code</li>
+            <li onclick="toggleTheme()">Toggle Theme</li>
+            <li onclick="formatCode()">Format Code</li>
+            <li onclick="toggleWordWrap()">Toggle Word Wrap</li>
+            <li onclick="increaseFontSize()">Increase Font Size</li>
+            <li onclick="decreaseFontSize()">Decrease Font Size</li>
+            <li onclick="addSnippet()">Add Snippet</li>
+            <li onclick="toggleLineNumbers()">Toggle Line Numbers</li>
+            <li onclick="highlightCode()">Highlight Code</li>
+            <li onclick="undo()">Undo</li>
+            <li onclick="redo()">Redo</li>
+        </ul>
+    </div>
+
+    <!-- Code Editor Tool -->
+    <div class="section code-editor-tool">
+        <h2></h2>
+        <div id="editor">
+            <!-- Default HTML code -->
+            <h1>Hello, World!</h1>
+            <p>This is a simple HTML code editor.</p>
+        </div>
+        <iframe id="output" frameborder="0"></iframe>
+    </div>
+
+    <!-- Ace Editor and Autocomplete Script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ext-language_tools.js"></script>
+    <script>
+        // Initialize Ace Editor (initialization code remains unchanged)
+        const editor = ace.edit("editor");
+        editor.setTheme("ace/theme/monokai");
+        editor.session.setMode("ace/mode/html");
+
+        editor.setOptions({
+            enableBasicAutocompletion: true,
+            enableLiveAutocompletion: true,
+            enableSnippets: true
+        });
+
+        // Function to run code (remains unchanged)
+        function runCode() {
+            const code = editor.getValue();
+            const outputFrame = document.getElementById('output');
+            outputFrame.contentDocument.open();
+            outputFrame.contentDocument.write(code);
+            outputFrame.contentDocument.close();
+        }
+
+        editor.session.on('change', function () {
+            runCode();
+        });
+
+        // Toggle the floating assistant menu
+        function toggleMenu() {
+            const menu = document.getElementById('menu');
+            if (menu.style.display === 'block') {
+                menu.style.display = 'none';
+            } else {
+                menu.style.display = 'block';
+            }
+        }
+
+        // Remaining functions remain unchanged
+        function resetEditor() {
+            editor.setValue('<h1>Hello, World!</h1>\n<p>This is a simple HTML code editor.</p>', 1);
+        }
+
+        function downloadCode() {
+            const code = editor.getValue();
+            const blob = new Blob([code], { type: 'text/html' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'code.html';
+            link.click();
+        }
+
+        function toggleTheme() {
+            const currentTheme = editor.getTheme();
+            editor.setTheme(currentTheme === 'ace/theme/monokai' ? 'ace/theme/github' : 'ace/theme/monokai');
+        }
+
+        function formatCode() {
+            const code = editor.getValue();
+            const formattedCode = html_beautify(code);
+            editor.setValue(formattedCode, 1);
+        }
+
+        function toggleWordWrap() {
+            editor.session.setUseWrapMode(!editor.session.getUseWrapMode());
+        }
+
+        function increaseFontSize() {
+            const currentSize = parseInt(editor.getFontSize(), 10);
+            editor.setFontSize(currentSize + 2);
+        }
+
+        function decreaseFontSize() {
+            const currentSize = parseInt(editor.getFontSize(), 10);
+            editor.setFontSize(currentSize - 2);
+        }
+
+        function addSnippet() {
+            editor.insert('<div class="snippet">\n\t<!-- Your code here -->\n</div>');
+        }
+
+        function toggleLineNumbers() {
+            editor.renderer.setShowGutter(!editor.renderer.getShowGutter());
+        }
+
+        function highlightCode() {
+            const code = editor.getValue();
+            const highlightedCode = hljs.highlightAuto(code).value;
+            editor.setValue(highlightedCode, 1);
+        }
+
+        function undo() {
+            editor.undo();
+        }
+
+        function redo() {
+            editor.redo();
+        }
+    </script>
+</body>
+
+</html>
